@@ -60,6 +60,9 @@
 - (void)commonInit;
 {
     self.shouldUpdateReturnPosition = YES;
+    self.shouldUpdateX = YES;
+    self.shouldUpdateY = YES;
+    self.shouldUseLimits = NO;    
 }
 
 #pragma mark UIResponder (touch handling)
@@ -141,10 +144,14 @@
 
 - (void)dragAtPosition:(UITouch*)touch;
 {
-    // animate into new position
-	[UIView animateWithDuration:DROPPABLEVIEW_ANIMATION_DURATION animations:^{
-        self.center = [touch locationInView: self.superview];
-    }];
+        CGPoint point = [touch locationInView: self.superview];
+    if (dragging) {
+        self.center = CGPointMake((self.shouldUpdateX && ((self.shouldUseLimits && point.x >= self.limitMinX && point.x <= self.limitMaxX) || !self.shouldUseLimits)) ? point.x : self.center.x, (self.shouldUpdateY && ((self.shouldUseLimits && point.y >= self.limitMinY && point.y <= self.limitMaxY) || !self.shouldUseLimits)) ? point.y : self.center.y);
+    }
+
+        initialPoint = point;
+
+    dragging = YES;
     
     // inform delegate
     if ([self.delegate respondsToSelector: @selector(droppableViewDidMove:)]) {
@@ -200,6 +207,8 @@
 
 - (void) endDrag
 {
+    dragging = NO;
+    
     // inform delegate
     if([self.delegate respondsToSelector: @selector(droppableViewEndedDragging:onTarget:)]) {
         [self.delegate droppableViewEndedDragging: self onTarget:self.activeDropTarget];
@@ -225,9 +234,9 @@
 	
     // animate back to original position
     if (shouldAnimateBack) {
-        [UIView animateWithDuration:DROPPABLEVIEW_ANIMATION_DURATION animations:^{
+//        [UIView animateWithDuration:DROPPABLEVIEW_ANIMATION_DURATION animations:^{
             self.center = self.returnPosition;
-        }];
+//        }];
     }
 }
 
